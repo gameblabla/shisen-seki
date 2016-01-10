@@ -1,0 +1,35 @@
+CC				= nspire-gcc
+CFLAGS		= -lSDL -DNO_FRAMELIMIT -DNO_SCALING
+LDFLAGS		= -lSDL -lm -Wl,--as-needed -Wl,--gc-sections -flto
+TARGET		= shisen.elf
+SRCDIR		:= src
+OBJDIR		:= obj
+SRC		:= $(wildcard $(SRCDIR)/*.c)
+OBJ		:= $(SRC:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+
+CFLAGS	+= -O2
+	
+.PHONY: all opk clean
+
+all: $(TARGET) gen mkprg
+
+gen :
+		genzehn --input ${TARGET} --output ${TARGET}.tns --compress
+mkprg:
+		make-prg ${TARGET}.tns ${TARGET}.prg.tns
+		rm ${TARGET}.tns
+		rm ${TARGET}
+		mv  ${TARGET}.prg.tns ${TARGET}.tns
+
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+$(OBJ): $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(OBJDIR):
+	mkdir -p $@
+
+clean:
+	rm -Rf $(TARGET) $(OBJDIR) $(RELEASEDIR)
+
